@@ -1,0 +1,9 @@
+venv/*
+venv/*/*
+venv/*/*/*
+*/venv/*
+envs/*
+envs/*/*
+envs/*/*/*
+*/envs/*
+./ipynb_checkpoints/*
