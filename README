@@ -1,7 +1,10 @@
 conda create --prefix ./envs python==3.8
 conda activate D:\workspace\python4excelu\envs
 conda install jupyterlab numpy 
-pip install pandas-ods-reader pandoc altair docxtpl
+pip install pandas-ods-reader pandoc altair altair_saver docxtpl
 jupyter lab
+
+# Save Chart in png format
+npm install vega-lite vega-cli canvas
 
 https://www.marknagelberg.com/syncing-your-jupyter-notebook-charts-to-microsoft-word-reports/#:~:text=To%20do%20this%2C%20the%20code,version%20to%20a%20new%20filename.
