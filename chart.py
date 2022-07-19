@@ -32,28 +32,33 @@ sectPr = section._sectPr
 cols = sectPr.xpath('./w:cols')[0]
 cols.set(qn('w:num'), '1')    
 
-def get_pivotTable(df):
-    df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
-    pTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
+def getPivotTable(df):
+    
+    if '자원유형' in df:
+        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
+        pivotTable = pd.pivot_table(df_filtered[['리전', '자원유형', '진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
+    elif 'DBMS' in df:
+        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
+        pivotTable = pd.pivot_table(df_filtered[['리전', 'DBMS', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index()        
+    elif 'count' in df:
+        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
+        pivotTable = pd.pivot_table(df_filtered[['리전', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index() 
+    elif 'k8s클러스터명' in df:
+        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
+        pivotTable = pd.pivot_table(df_filtered[['리전', 'k8s클러스터명']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()           
+    else:
+        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+        pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
+        
     # filtered.describe()
-    pTable.columns = ['리전', '합계']
-    pTable.sort_values(by=['합계'], ascending=False, inplace=True)
-    pTable.reset_index(drop=True, inplace=True)
-    total = pTable["합계"].sum()
-    pTable['비중'] = round(pTable['합계'] / total, 2) * 100
-    return pTable
+    pivotTable.columns = ['리전', '합계']
+    pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
+    pivotTable.reset_index(drop=True, inplace=True)
+    total = pivotTable["합계"].sum()
+    pivotTable['비중'] = round(pivotTable['합계'] / total, 2) * 100
+    return pivotTable
 
-def get_pivotTable_am(df):
-    df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
-    pTable = pd.pivot_table(df_filtered[['리전', 'DBMS', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index()
-    pTable.columns = ['리전', '합계']
-    pTable.sort_values(by=['합계'], ascending=False, inplace=True)
-    pTable.reset_index(drop=True, inplace=True)
-    total = pTable["합계"].sum()
-    pTable['비중'] = round((pTable['합계'] / total)*100, 1)
-    return pTable
-
-def get_barChart(source):
+def getBarChart(source):
     bar = alt.Chart(source).mark_bar().encode(
         x=alt.X('리전'),
         y=alt.Y('합계:Q', title='')
@@ -71,7 +76,7 @@ def get_barChart(source):
     chart = (bar + text).properties(width=400, height=200)
     return chart
 
-def get_pieChart(source):
+def getPieChart(source):
     base = alt.Chart(source).encode(
         theta=alt.Theta("합계:Q", 
                         stack=True), 
@@ -93,7 +98,7 @@ def get_pieChart(source):
     chart = (pie + text).properties(width=400, height=400)
     return chart
 
-def get_lineChart(source):
+def getLineChart(source):
     point = alt.Chart(source).mark_point().encode(
         x=alt.X('월'),
         y=alt.Y('count()'),
@@ -119,7 +124,7 @@ def get_lineChart(source):
     chart = (point + line + text).properties(width=400, height=200)
     return chart
 
-def get_lineChart_am(source):
+def getLineChart_am(source):
     point = alt.Chart(source).mark_point().encode(
         x=alt.X('월'),
         y=alt.Y('sum(count)'),
