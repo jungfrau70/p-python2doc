@@ -1,3 +1,23 @@
+#conda create --prefix ./envs python==3.8
+#conda activate D:\workspace\python4excelu\envs
+#conda install jupyterlab numpy
+
+cd c:\cocpython\
+python3 -m venv venv --copies
+dir c:\cocpython\venv
+
+venv\Scripts\activate
+
+(If required, 관리자 권한으로)
+     .\venv\Scripts\activate.bat
+    pip install --upgrade pip
+
+(venv) pip install pandas-ods-reader pandoc altair docxtpl pandas jupyterlab
+
+(venv) jupyter lab
+
+https://www.marknagelberg.com/syncing-your-jupyter-notebook-charts-to-microsoft-word-reports/#:~:text=To%20do%20this%2C%20the%20code,version%20to%20a%20new%20filename.
+
 conda create --prefix ./envs python==3.8
 conda activate D:\workspace\python4excelu\envs
 conda install jupyterlab numpy 

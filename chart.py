@@ -35,8 +35,11 @@ cols.set(qn('w:num'), '1')
 def getPivotTable(df):
     
     if '자원유형' in df:
+        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+        pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
+    elif 'DBType' in df:
         df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
-        pivotTable = pd.pivot_table(df_filtered[['리전', '자원유형', '진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
+        pivotTable = pd.pivot_table(df_filtered[['리전', 'DBType']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()                
     elif 'DBMS' in df:
         df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
         pivotTable = pd.pivot_table(df_filtered[['리전', 'DBMS', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index()        
@@ -51,12 +54,13 @@ def getPivotTable(df):
         pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
         
     # filtered.describe()
+    print(pivotTable)
     pivotTable.columns = ['리전', '합계']
     pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
     pivotTable.reset_index(drop=True, inplace=True)
     total = pivotTable["합계"].sum()
     pivotTable['비중'] = round(pivotTable['합계'] / total, 2) * 100
-    return pivotTable
+    return pivotTable, total
 
 def getBarChart(source):
     bar = alt.Chart(source).mark_bar().encode(
