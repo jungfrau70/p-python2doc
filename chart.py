@@ -32,6 +32,29 @@ sectPr = section._sectPr
 cols = sectPr.xpath('./w:cols')[0]
 cols.set(qn('w:num'), '1')    
 
+def getTable(df, regex, month):
+    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+    table = df_filtered[df_filtered['월'] == month].reset_index()
+    table = table[['리전', '테넌트', '진행상태', '성패', 'Description']]
+    # dfi.export(table, 'table.png')
+    return table
+
+def getTables(df, regex, month):
+    df['장애전파'] = (pd.to_datetime(df['장애전파시간.1'])-pd.to_datetime(df['발생인지시간'])).astype('timedelta64[m]')
+    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['월']== month) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+    # df_filtered
+    df_filtered['장애전파'] = (pd.to_datetime(df_filtered['장애전파시간.1'])-pd.to_datetime(df_filtered['발생인지시간'])).astype('timedelta64[m]')
+    df_filtered['장애전파시간.1'] = pd.to_datetime(df_filtered['장애전파시간.1'])
+    timeslot  = df_filtered[['장애전파시간.1', '장애전파']]
+    # timeslot
+    timeslot.columns = ['일', '장애전파']
+    # timeslot.info()
+    timeslot['일'] = timeslot['일'].dt.day
+    # timeslot['장애전파'] = timeslot['장애전파'].astype('timedelta64[m]')
+    timeslot.sort_values(by=['일'], ascending=True, inplace=True)
+    # timeslot
+    return df, timeslot
+
 def getPivotTable(df):
     
     if '자원유형' in df:
@@ -54,7 +77,7 @@ def getPivotTable(df):
         pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
         
     # filtered.describe()
-    print(pivotTable)
+    # print(pivotTable)
     pivotTable.columns = ['리전', '합계']
     pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
     pivotTable.reset_index(drop=True, inplace=True)
@@ -114,7 +137,7 @@ def getLineChart(source):
         y=alt.Y('count()', title='')
     )
 
-    text = bar.mark_text(
+    text = point.mark_text(
         size=12,
         align='center',
         baseline='line-top',
@@ -153,3 +176,14 @@ def getLineChart_am(source):
 
     chart = (point + line + text).properties(width=400, height=200)
     return chart
+
+def getPointChart(source):
+    # Scatter Plot
+    points = alt.Chart(source).mark_point().encode(
+        x='일:Q',
+        y='장애전파:Q',
+       # color=alt.condition(brush, '일:O', alt.value('grey'))
+    ) #.add_selection(brush)
+
+    chart = points
+    return chart    
