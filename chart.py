@@ -8,36 +8,15 @@ import altair as alt
 import pandas as pd
 import re  
 
-from docx import Document
-from docx.enum.style import WD_STYLE_TYPE
-from docx.shared import Pt, RGBColor, Inches
-from docx.oxml.ns import qn
-from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
-import docx
+#from io import BytesIO
+#memfile = BytesIO()
 
-from io import BytesIO
-memfile = BytesIO()
-
-document = Document()
-sections = document.sections
-for section in sections:
-    section.top_margin = Inches(0.5)
-    section.bottom_margin = Inches(1)
-    section.left_margin = Inches(1)
-    section.right_margin = Inches(1)
-    
-section = document.sections[0]
-
-sectPr = section._sectPr
-cols = sectPr.xpath('./w:cols')[0]
-cols.set(qn('w:num'), '1')    
-
-def getTable(df, regex, month):
-    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
-    table = df_filtered[df_filtered['월'] == month].reset_index()
-    table = table[['리전', '테넌트', '진행상태', '성패', 'Description']]
+#def getTable(df, regex, month):
+#    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료') & (df['월간']=='O')]
+#    table = df_filtered[df_filtered['월'] == month].reset_index()
+#    table = table[['리전', '테넌트', '진행상태', '성패', 'Description']]
     # dfi.export(table, 'table.png')
-    return table
+#    return table
 
 def getTables(df, regex, month):
     df['장애전파'] = (pd.to_datetime(df['장애전파시간.1'])-pd.to_datetime(df['발생인지시간'])).astype('timedelta64[m]')
@@ -45,9 +24,9 @@ def getTables(df, regex, month):
     # df_filtered
     df_filtered['장애전파'] = (pd.to_datetime(df_filtered['장애전파시간.1'])-pd.to_datetime(df_filtered['발생인지시간'])).astype('timedelta64[m]')
     df_filtered['장애전파시간.1'] = pd.to_datetime(df_filtered['장애전파시간.1'])
-    timeslot  = df_filtered[['장애전파시간.1', '장애전파']]
+    timeslot  = df_filtered[['장애전파시간.1', '장애전파', '리전']]
     # timeslot
-    timeslot.columns = ['일', '장애전파']
+    timeslot.columns = ['일', '장애전파', '리전']
     # timeslot.info()
     timeslot['일'] = timeslot['일'].dt.day
     # timeslot['장애전파'] = timeslot['장애전파'].astype('timedelta64[m]')
@@ -125,7 +104,8 @@ def getPieChart(source):
     chart = (pie + text).properties(width=400, height=400)
     return chart
 
-def getLineChart(source):
+def getLineChart(df):
+    source = df
     point = alt.Chart(source).mark_point().encode(
         x=alt.X('월'),
         y=alt.Y('count()'),
@@ -177,13 +157,36 @@ def getLineChart_am(source):
     chart = (point + line + text).properties(width=400, height=200)
     return chart
 
-def getPointChart(source):
-    # Scatter Plot
-    points = alt.Chart(source).mark_point().encode(
-        x='일:Q',
-        y='장애전파:Q',
-       # color=alt.condition(brush, '일:O', alt.value('grey'))
-    ) #.add_selection(brush)
 
+def getScatterChart(timeslot, month):
+    
+    # Brush for selection
+    brush = alt.selection(type='interval')
+
+    # Scatter Plot
+    source = timeslot
+    points = alt.Chart(source).mark_point().encode(
+        x=alt.X('일:Q', scale=alt.Scale(padding=15), title='장애 발생 일'),
+        y=alt.Y('장애전파:Q', title='장애전파 시간(분)'),
+        color=alt.Color('리전:N')
+    ).add_selection(brush)
+
+    points
+
+    # Base chart for data tables
+    ranked_text = alt.Chart(source).mark_text(align='right').encode(
+        y=alt.Y('row_number:O',axis=None)
+    ).transform_filter(
+        brush
+    )
+    
+    #.transform_window(
+    #    row_number='row_number()'
+    #).transform_filter(
+    #    'datum.row_number < 15'
+    #)
+
+    
+    #chart = points + ranked_text
     chart = points
-    return chart    
+    return chart
