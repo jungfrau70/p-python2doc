@@ -10,10 +10,6 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 
 document = Document()
 sections = document.sections
-from docx import Document
-from docx.shared import Inches
-
-document = Document()
 
 for section in sections:
     section.top_margin = Inches(0.5)
@@ -27,12 +23,8 @@ sectPr = section._sectPr
 cols = sectPr.xpath('./w:cols')[0]
 cols.set(qn('w:num'), '1')
 
-#import dataframe_image as dfi
-
-def writeTable(df, regex, month):
+def addSummaryTable(df, regex, month):
     
-    df = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['월간']=='O')]
-
     if [ month != '누적' ]:
         df = df[df['월'] == month].reset_index()
     else:
@@ -50,4 +42,25 @@ def writeTable(df, regex, month):
         row_cells[0].text = df['월'][ind]
         row_cells[1].text = df['진행상태'][ind]
         row_cells[2].text = df['Description'][ind]  
-        
+
+def addFailedTable(df, regex, month):
+    
+    if [ month != '누적' ]:
+        df = df[df['월'] == month].reset_index()
+    else:
+        pass
+    
+    table = document.add_table(rows=1, cols=4, style="Table Grid")
+
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = '날짜'
+    hdr_cells[1].text = '진행상태'
+    hdr_cells[2].text = '내용 상세'
+    hdr_cells[3].text = '장애전파시간(분)'
+    
+    for ind in df.index:
+        row_cells = table.add_row().cells
+        row_cells[0].text = df['날짜'][ind]
+        row_cells[1].text = df['장애 내용'][ind]
+        row_cells[2].text = df['장애대응조치내용'][ind]  
+        row_cells[3].text = '%0.1f' % df['장애전파'][ind]

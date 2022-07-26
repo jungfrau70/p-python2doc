@@ -20,19 +20,22 @@ import re
 
 def getTables(df, regex, month):
     df['장애전파'] = (pd.to_datetime(df['장애전파시간.1'])-pd.to_datetime(df['발생인지시간'])).astype('timedelta64[m]')
-    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['월']== month) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+    
     # df_filtered
     df_filtered['장애전파'] = (pd.to_datetime(df_filtered['장애전파시간.1'])-pd.to_datetime(df_filtered['발생인지시간'])).astype('timedelta64[m]')
     df_filtered['장애전파시간.1'] = pd.to_datetime(df_filtered['장애전파시간.1'])
-    timeslot  = df_filtered[['장애전파시간.1', '장애전파', '리전']]
+    
     # timeslot
+    timeslot = df_filtered[df_filtered['월']== month]
+    timeslot  = timeslot[['장애전파시간.1', '장애전파', '리전']]
     timeslot.columns = ['일', '장애전파', '리전']
-    # timeslot.info()
+    
     timeslot['일'] = timeslot['일'].dt.day
     # timeslot['장애전파'] = timeslot['장애전파'].astype('timedelta64[m]')
     timeslot.sort_values(by=['일'], ascending=True, inplace=True)
     # timeslot
-    return df, timeslot
+    return df_filtered, timeslot
 
 def getPivotTable(df):
     
@@ -104,12 +107,12 @@ def getPieChart(source):
     chart = (pie + text).properties(width=400, height=400)
     return chart
 
-def getLineChart(df):
+def getLineChart(df, month):
     source = df
     point = alt.Chart(source).mark_point().encode(
-        x=alt.X('월'),
-        y=alt.Y('count()'),
-        # text=alt.Text("성패:Q")
+        x=alt.X('월', scale=alt.Scale(padding=15), title='월별 발생 추세'),
+        y=alt.Y('count()', title='이벤트 발생 건수'),
+        color=alt.Color('리전:N')
     )
 
     line = alt.Chart(source).mark_line(color="red").encode(
@@ -167,7 +170,7 @@ def getScatterChart(timeslot, month):
     source = timeslot
     points = alt.Chart(source).mark_point().encode(
         x=alt.X('일:Q', scale=alt.Scale(padding=15), title='장애 발생 일'),
-        y=alt.Y('장애전파:Q', title='장애전파 시간(분)'),
+        y=alt.Y('장애전파:Q', title='장애전파 소요시간(분)'),
         color=alt.Color('리전:N')
     ).add_selection(brush)
 
