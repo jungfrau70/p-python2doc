@@ -110,13 +110,13 @@ def getPieChart(source):
 def getLineChart(df, month):
     source = df
     point = alt.Chart(source).mark_point().encode(
-        x=alt.X('월', scale=alt.Scale(padding=15), title='월별 발생 추세'),
-        y=alt.Y('count()', title='이벤트 발생 건수'),
+        x=alt.X('월', scale=alt.Scale(padding=15), title='월별 추세'),
+        y=alt.Y('count()', title='발생 건수'),
         color=alt.Color('리전:N')
     )
 
     line = alt.Chart(source).mark_line(color="red").encode(
-        x=alt.X('월'),
+        x=alt.X('월', title='월별 추세'),
         y=alt.Y('count()', title='')
     )
 
@@ -134,15 +134,16 @@ def getLineChart(df, month):
     chart = (point + line + text).properties(width=400, height=200)
     return chart
 
-def getLineChart_am(source):
+def getLineChart2(df, month):
+    source = df    
     point = alt.Chart(source).mark_point().encode(
-        x=alt.X('월'),
-        y=alt.Y('sum(count)'),
+        x=alt.X('월', scale=alt.Scale(padding=15), title='월별 추세'),
+        y=alt.Y('sum(count)', title='수량'),
         # text=alt.Text("성패:Q")
     )
 
     line = alt.Chart(source).mark_line(color="red").encode(
-        x=alt.X('월'),
+        x=alt.X('월', title='월별 추세'),
         y=alt.Y('sum(count)', title='')
     )
 

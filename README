@@ -21,7 +21,7 @@ https://www.marknagelberg.com/syncing-your-jupyter-notebook-charts-to-microsoft-
 conda create --prefix ./envs python==3.8
 conda activate D:\workspace\python4excelu\envs
 conda install jupyterlab numpy 
-pip install pandas-ods-reader altair altair_saver docxtpl dataframe-image
+pip install pandas-ods-reader altair altair_saver docxtpl papermill[all]
 
 jupyter lab
 
