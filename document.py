@@ -64,6 +64,31 @@ def addTable3(df, regex, month):
         row_cells[1].text = df['진행상태'][ind]
         row_cells[2].text = df['제목'][ind] 
 
+def addTablek8s(df, regex, month):
+    
+    if [ month != '누적' ]:
+        df = df[df['월'] == month].reset_index()
+    else:
+        pass
+    
+    table = document.add_table(rows=1, cols=6, style="Table Grid")
+
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = '리전'
+    hdr_cells[1].text = '클러스터명'
+    hdr_cells[2].text = '노드수'
+    hdr_cells[3].text = 'CPU사용율'    
+    hdr_cells[4].text = 'RAM사용율'
+    hdr_cells[5].text = '모니터링설치'
+    
+    for ind in df.index:
+        row_cells = table.add_row().cells
+        row_cells[0].text = df['리전'][ind]
+        row_cells[1].text = df['클러스터명'][ind]
+        row_cells[2].text = '%0.1f' % df['노드수'][ind] 
+        row_cells[3].text = '%0.1f' % df['CPU_사용율'][ind]        
+        row_cells[4].text = '%0.1f' % df['RAM_사용율'][ind]
+        row_cells[5].text = df['모니터링툴설치_유무'][ind] 
         
 def addTable4(df, regex, month):
     
@@ -101,8 +126,6 @@ def addPivot2Table(df):
     hdr_cells[6].text = 'RU'
     hdr_cells[7].text = '합계' 
     hdr_cells[8].text = '비중' 
-
-    # DBMS유형	CN	EU	KR	NA	RU	SG	합계	비중
     
     for ind in df.index:
         row_cells = table.add_row().cells
@@ -128,15 +151,15 @@ def addFailedTable(df, regex, month):
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = '날짜'
     hdr_cells[1].text = '진행상태'
-    hdr_cells[2].text = '진행상태'    
-    hdr_cells[3].text = '작업내용'
-    hdr_cells[4].text = '장애전파시간(분)'
+    hdr_cells[2].text = '장애이벤트'    
+    hdr_cells[3].text = '조치내용'
+    hdr_cells[4].text = '장애전파소요시간(분)'
     
     for ind in df.index:
         row_cells = table.add_row().cells
         row_cells[0].text = df['날짜'][ind]
         row_cells[1].text = df['진행상태'][ind]
-        row_cells[2].text = df['장애내용'][ind]
+        row_cells[2].text = df['장애이벤트'][ind]
         row_cells[3].text = df['조치내용'][ind]  
         row_cells[4].text = '%0.1f' % df['장애전파소요시간'][ind]
             

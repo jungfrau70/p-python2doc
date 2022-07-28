@@ -29,7 +29,6 @@ def getTables(df, regex, month):
     return df_filtered, timeslot
 
 def getPivotTable(df, month):
-    
     if '자원유형' in df:
         df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
         pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
@@ -38,15 +37,26 @@ def getPivotTable(df, month):
         pivotTable.reset_index(drop=True, inplace=True)
         total = pivotTable["합계"].sum()
         pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)        
-    elif 'k8s클러스터명' in df:
+    elif '클러스터명' in df:
+        # 자산관리 K8s
         df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD')]
-        pivotTable = pd.pivot_table(df_filtered[['리전', 'k8s클러스터명']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()    
+        pivotTable = pd.pivot_table(df_filtered[['리전', '클러스터명']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()    
         pivotTable.columns = ['리전', '합계']
         pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
         pivotTable.reset_index(drop=True, inplace=True)
         total = pivotTable["합계"].sum()
-        pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)       
+        pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)   
+    elif '성패' in df:
+        # 백업관리 DB
+        df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD')]
+        pivotTable = pd.pivot_table(df_filtered[['리전', '성패']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()       
+        pivotTable.columns = ['리전', '합계']
+        pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
+        pivotTable.reset_index(drop=True, inplace=True)
+        total = pivotTable["합계"].sum()
+        pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)        
     elif 'count' in df:
+        # 집계
         df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD')]
         pivotTable = pd.pivot_table(df_filtered[['리전', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index() 
         pivotTable["합계"] = pivotTable.sum(axis=1)
@@ -54,30 +64,15 @@ def getPivotTable(df, month):
         total = pivotTable["합계"].sum()
         pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)
     else:
-        pivotTable, total = None, None
+        # 표준 데이터
+        df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+        pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
+        pivotTable.columns = ['리전', '합계']
+        pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
+        pivotTable.reset_index(drop=True, inplace=True)
+        total = pivotTable["합계"].sum()
+        pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)
 
-    # elif 'DBType' in df:
-    #     df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD')]
-    #     pivotTable = pd.pivot_table(df_filtered[['리전', 'DBType']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()                
-    # elif 'DBMS유형' in df:
-    #     # 자산관리 DB
-    #     df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD')]
-    #     pivotTable = pd.pivot_table(df_filtered[['리전', 'DBMS유형', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index()        
-    # elif 'count' in df:
-    #     df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD')]
-    #     pivotTable = pd.pivot_table(df_filtered[['리전', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index() 
-        
-    # else:
-    #     df_filtered = df.loc[(df['월']==month) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
-    #     pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
-        
-    # filtered.describe()
-    # print(pivotTable)
-    # pivotTable.columns = ['리전', '합계']
-    # pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
-    # pivotTable.reset_index(drop=True, inplace=True)
-    # total = pivotTable["합계"].sum()
-    # pivotTable['비중'] = round((pivotTable['합계'] / total) * 100, 1)
     return pivotTable, total
 
 

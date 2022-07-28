@@ -22,7 +22,7 @@ def hanfont():
     }
     
 
-def getBarChart(source):
+def getBarChart1(source):
     bar = alt.Chart(source).mark_bar().encode(
         x=alt.X('리전'),
         y=alt.Y('count()', title=''),
@@ -34,6 +34,78 @@ def getBarChart(source):
         dx=7  # Nudges text to right so it doesn't appear on top of the bar
     ).encode(
         text='count():Q'
+    )
+
+    chart = (bar + text).properties(width=360, height=360)
+    return chart
+
+def getBarChart1s(source, month):
+    
+    bar = alt.Chart(source).mark_bar().encode(
+        x=alt.X('유형:N'),
+        y=alt.Y('sum(count)', title=''),
+        color=alt.Color("유형:N", legend=None)
+    )
+    text = bar.mark_text(
+        align='center', # align='left',
+        baseline='middle',
+        dx=7  # Nudges text to right so it doesn't appear on top of the bar
+    ).encode(
+        text='sum(count):Q'
+    )
+
+    chart = (bar + text).properties(width=360, height=360)
+    return chart
+
+def getBarChart2(source, month):
+    bar = alt.Chart(source).mark_bar().encode(
+        x=alt.X('월'),
+        y=alt.Y('count()', title=''),
+        color=alt.Color("성패:N", legend=None)
+    )
+    text = bar.mark_text(
+        align='center', # align='left',
+        baseline='middle',
+        dx=7  # Nudges text to right so it doesn't appear on top of the bar
+    ).encode(
+        text='count():Q'
+    )
+
+    chart = (bar + text).properties(width=360, height=360)
+    return chart
+
+
+def getBarChart2s(source, month):
+    
+    bar = alt.Chart(source).mark_bar().encode(
+        x=alt.X('월:N'),
+        y=alt.Y('sum(count)', title=''),
+        color=alt.Color("유형:N", legend=None)
+    )
+    text = bar.mark_text(
+        align='left', # align='center',
+        baseline='top', # baseline='middle',
+        dx=7  # Nudges text to right so it doesn't appear on top of the bar
+    ).encode(
+        text='sum(count):Q'
+    )
+
+    chart = (bar + text).properties(width=360, height=360)
+    return chart
+
+def getBarChart3s(source, month):
+    
+    bar = alt.Chart(source).mark_bar().encode(
+        x=alt.X('유형:N'),
+        y=alt.Y('sum(count)', title=''),
+        color=alt.Color("유형:N", legend=None)
+    )
+    text = bar.mark_text(
+        align='center', # align='left',
+        baseline='middle',
+        dx=7  # Nudges text to right so it doesn't appear on top of the bar
+    ).encode(
+        text='sum(count):Q'
     )
 
     chart = (bar + text).properties(width=360, height=360)
@@ -83,7 +155,7 @@ def getPieChart2(source):
     chart = (pie + text).properties(width=360, height=360)
     return chart
 
-def getLineChart(df, month):
+def getLineChart2(df, month):
     source = df
     point = alt.Chart(source).mark_point().encode(
         x=alt.X('월', scale=alt.Scale(padding=15), title='월별 추세'),
@@ -110,12 +182,12 @@ def getLineChart(df, month):
     chart = (point + line + text).properties(width=360, height=200)
     return chart
 
-def getLineChart2(df, month):
+def getLineChart2s(df, month):
     source = df    
     point = alt.Chart(source).mark_point().encode(
         x=alt.X('월', scale=alt.Scale(padding=15), title='월별 추세'),
         y=alt.Y('sum(count)', title='수량'),
-        # text=alt.Text("성패:Q")
+        text=alt.Text("성패:N")
     )
 
     line = alt.Chart(source).mark_line(color="red").encode(
@@ -132,6 +204,33 @@ def getLineChart2(df, month):
         fontSize=12,
     ).encode(
         text = 'sum(count):Q'
+    )
+
+    chart = (point + line + text).properties(width=360, height=200)
+    return chart
+
+def getLineChart3(df, month):
+    source = df
+    point = alt.Chart(source).mark_point().encode(
+        x=alt.X('월', scale=alt.Scale(padding=15), title='월별 추세'),
+        y=alt.Y('count()', title='발생 건수'),
+        color=alt.Color('성패:N')
+    )
+
+    line = alt.Chart(source).mark_line(color="red").encode(
+        x=alt.X('월', title='월별 추세'),
+        y=alt.Y('count()', title='')
+    )
+
+    text = point.mark_text(
+        size=12,
+        align='center',
+        baseline='line-top',
+        color='black',
+        dy=-20,
+        fontSize=12,
+    ).encode(
+        text = 'count(성패):Q'
     )
 
     chart = (point + line + text).properties(width=360, height=200)
