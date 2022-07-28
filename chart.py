@@ -1,4 +1,3 @@
-# %load chart.py
 
 import pandas as pd
 from pandas import Series, DataFrame
@@ -8,81 +7,36 @@ import altair as alt
 import pandas as pd
 import re  
 
-#from io import BytesIO
-#memfile = BytesIO()
-
-#def getTable(df, regex, month):
-#    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료') & (df['월간']=='O')]
-#    table = df_filtered[df_filtered['월'] == month].reset_index()
-#    table = table[['리전', '테넌트', '진행상태', '성패', 'Description']]
-    # dfi.export(table, 'table.png')
-#    return table
-
-def getTables(df, regex, month):
-    df['장애전파'] = (pd.to_datetime(df['장애전파시간.1'])-pd.to_datetime(df['발생인지시간'])).astype('timedelta64[m]')
-    df_filtered = df[df['리전'].apply(lambda x: True if re.search(regex, x) else False) & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
+def hanfont():
+    font = "맑은고딕"
     
-    # df_filtered
-    df_filtered['장애전파'] = (pd.to_datetime(df_filtered['장애전파시간.1'])-pd.to_datetime(df_filtered['발생인지시간'])).astype('timedelta64[m]')
-    df_filtered['장애전파시간.1'] = pd.to_datetime(df_filtered['장애전파시간.1'])
+    return {
+        "config" : {
+             "axis": {
+                  "fontSize": 12,                
+                  "font": font,
+                  "anchor": "start", # equivalent of left-aligned.
+                  "fontColor": "#000000"
+             }
+        }
+    }
     
-    # timeslot
-    timeslot = df_filtered[df_filtered['월']== month]
-    timeslot  = timeslot[['장애전파시간.1', '장애전파', '리전']]
-    timeslot.columns = ['일', '장애전파', '리전']
-    
-    timeslot['일'] = timeslot['일'].dt.day
-    # timeslot['장애전파'] = timeslot['장애전파'].astype('timedelta64[m]')
-    timeslot.sort_values(by=['일'], ascending=True, inplace=True)
-    # timeslot
-    return df_filtered, timeslot
-
-def getPivotTable(df):
-    
-    if '자원유형' in df:
-        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
-        pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
-    elif 'DBType' in df:
-        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
-        pivotTable = pd.pivot_table(df_filtered[['리전', 'DBType']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()                
-    elif 'DBMS' in df:
-        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
-        pivotTable = pd.pivot_table(df_filtered[['리전', 'DBMS', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index()        
-    elif 'count' in df:
-        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
-        pivotTable = pd.pivot_table(df_filtered[['리전', 'count']], index = ['리전'], aggfunc = 'sum').rename_axis('리전').reset_index() 
-    elif 'k8s클러스터명' in df:
-        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD')]
-        pivotTable = pd.pivot_table(df_filtered[['리전', 'k8s클러스터명']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()           
-    else:
-        df_filtered = df.loc[(df['월']=='6월') & (df['테넌트']== 'PRD') & (df['진행상태']=='완료')]
-        pivotTable = pd.pivot_table(df_filtered[['리전','진행상태']], index = ['리전'], aggfunc = 'count').rename_axis('리전').reset_index()
-        
-    # filtered.describe()
-    # print(pivotTable)
-    pivotTable.columns = ['리전', '합계']
-    pivotTable.sort_values(by=['합계'], ascending=False, inplace=True)
-    pivotTable.reset_index(drop=True, inplace=True)
-    total = pivotTable["합계"].sum()
-    pivotTable['비중'] = round(pivotTable['합계'] / total, 2) * 100
-    return pivotTable, total
 
 def getBarChart(source):
     bar = alt.Chart(source).mark_bar().encode(
         x=alt.X('리전'),
-        y=alt.Y('합계:Q', title='')
+        y=alt.Y('count()', title=''),
+        color=alt.Color("리전:N", legend=None)
     )
     text = bar.mark_text(
-        size=12,
-        color='black',
-        dy = -10
+        align='center', # align='left',
+        baseline='middle',
+        dx=7  # Nudges text to right so it doesn't appear on top of the bar
     ).encode(
-        text="label:N"
-    ).transform_calculate(
-        label = alt.datum.리전 + ": " + alt.datum.합계   + ", " + alt.datum.비중 +"%"
+        text='count():Q'
     )
 
-    chart = (bar + text).properties(width=400, height=200)
+    chart = (bar + text).properties(width=360, height=360)
     return chart
 
 def getPieChart(source):
@@ -104,7 +58,29 @@ def getPieChart(source):
         label = alt.datum.리전 + ": " + alt.datum.합계   + ", " + alt.datum.비중 +"%"
     )
 
-    chart = (pie + text).properties(width=400, height=400)
+    chart = (pie + text).properties(width=360, height=360)
+    return chart
+
+def getPieChart2(source):
+    base = alt.Chart(source).encode(
+        theta=alt.Theta("합계:Q", 
+                        stack=True), 
+        color=alt.Color("DBMS유형:N", legend=None)
+    )
+
+    pie = base.mark_arc(outerRadius=120)
+
+    text = pie.mark_text(
+        size=12,
+        radius=160,        
+        color='black'
+    ).encode(
+        text="label:N"
+    ).transform_calculate(
+        label = alt.datum.DBMS유형 + ": " + alt.datum.합계   + ", " + alt.datum.비중 +"%"
+    )
+
+    chart = (pie + text).properties(width=360, height=360)
     return chart
 
 def getLineChart(df, month):
@@ -131,7 +107,7 @@ def getLineChart(df, month):
         text = 'count(성패):Q'
     )
 
-    chart = (point + line + text).properties(width=400, height=200)
+    chart = (point + line + text).properties(width=360, height=200)
     return chart
 
 def getLineChart2(df, month):
@@ -158,7 +134,7 @@ def getLineChart2(df, month):
         text = 'sum(count):Q'
     )
 
-    chart = (point + line + text).properties(width=400, height=200)
+    chart = (point + line + text).properties(width=360, height=200)
     return chart
 
 
@@ -192,5 +168,6 @@ def getScatterChart(timeslot, month):
 
     
     #chart = points + ranked_text
-    chart = points
+    chart = (points).properties(width=360, height=200)
+
     return chart
