@@ -1,7 +1,7 @@
 
 import docx
 import re  
-
+import pandas as pd
 from docx import Document
 from docx.enum.style import WD_STYLE_TYPE
 from docx.shared import Pt, RGBColor, Inches
@@ -63,32 +63,34 @@ def addTable3(df, regex, month):
         row_cells[0].text = df['리전'][ind]
         row_cells[1].text = df['진행상태'][ind]
         row_cells[2].text = df['제목'][ind] 
-
+        
 def addTablek8s(df, regex, month):
     
     if [ month != '누적' ]:
         df = df[df['월'] == month].reset_index()
     else:
         pass
-    
-    table = document.add_table(rows=1, cols=6, style="Table Grid")
+
+    unique_df = df['클러스터명'].value_counts()
+    unique_df = pd.DataFrame({'클러스터명':unique_df.index, '노드수':unique_df.values})
+    df = df.drop_duplicates(['클러스터명'])
+    table = document.add_table(rows=1, cols=4, style="Table Grid")
 
     hdr_cells = table.rows[0].cells
     hdr_cells[0].text = '리전'
     hdr_cells[1].text = '클러스터명'
     hdr_cells[2].text = '노드수'
-    hdr_cells[3].text = 'CPU사용율'    
-    hdr_cells[4].text = 'RAM사용율'
-    hdr_cells[5].text = '모니터링설치'
+    hdr_cells[3].text = '프로메테우스_설치_유무'
     
+    
+    i = 0
     for ind in df.index:
         row_cells = table.add_row().cells
         row_cells[0].text = df['리전'][ind]
         row_cells[1].text = df['클러스터명'][ind]
-        row_cells[2].text = '%0.1f' % df['노드수'][ind] 
-        row_cells[3].text = '%0.1f' % df['CPU_사용율'][ind]        
-        row_cells[4].text = '%0.1f' % df['RAM_사용율'][ind]
-        row_cells[5].text = df['모니터링툴설치_유무'][ind] 
+        row_cells[2].text = str(unique_df['노드수'][i])
+        row_cells[3].text = df['프로메테우스_설치_유무'][ind] 
+        i += 1
         
 def addTable4(df, regex, month):
     
@@ -162,4 +164,44 @@ def addFailedTable(df, regex, month):
         row_cells[2].text = df['장애이벤트'][ind]
         row_cells[3].text = df['조치내용'][ind]  
         row_cells[4].text = '%0.1f' % df['장애전파소요시간'][ind]
-            
+
+def addTable_DB_license(df, regex, month):
+    
+    if [ month != '누적' ]:
+        df = df[df['월'] == month].reset_index()
+    else:
+        pass
+    
+    table = document.add_table(rows=1, cols=7, style="Table Grid")
+
+    hdr_cells = table.rows[0].cells
+    hdr_cells[0].text = '년도'
+    hdr_cells[1].text = '월'
+    hdr_cells[2].text = '리전'
+    hdr_cells[3].text = '라이선스 종류'    
+    hdr_cells[4].text = 'Hostname'    
+    hdr_cells[5].text = '라이선스'    
+    hdr_cells[6].text = '만료일'    
+
+    for ind in df.index:
+        row_cells = table.add_row().cells
+        row_cells[0].text = df['년도'][ind]
+        row_cells[1].text = df['월'][ind]
+        row_cells[2].text = df['리전'][ind]
+        row_cells[3].text = df['라이선스 종류'][ind]
+        row_cells[4].text = df['Hostname'][ind]          
+        row_cells[5].text = df['라이선스'][ind]          
+        row_cells[6].text = df['비고'][ind]
+        
+def addTable(df):
+       
+    table = document.add_table(df.shape[0]+1, df.shape[1], style="Table Grid")
+
+    # add the header rows
+    for j in range(df.shape[-1]):
+        table.cell(0,j).text = df.columns[j]
+
+    # add the rest of the dataframe    
+    for i in range(df.shape[0]):
+        for j in range(df.shape[-1]):
+            table.cell(i+1,j).text = str(df.values[i,j])
